@@ -179,6 +179,14 @@ export default function App() {
     "MA Overhead": d.vessels + d.seismic + d.other + d.rou,
   }));
 
+  const maOverheadMax = Math.max(...maOverheadData.map((d) => d._overhead));
+  const maBarDomain = [0, Math.ceil((maOverheadMax * 1.15) / 5) * 5];
+  const maLineMin = Math.min(...maOverheadLine.map((d) => d["MA Overhead"]));
+  const maLineDomain = [
+    Math.floor((maLineMin * 0.85) / 5) * 5,
+    Math.ceil((maOverheadMax * 1.1) / 5) * 5,
+  ];
+
   const fmtUSD = (v) => v.toLocaleString();
 
   const tabs = [
@@ -465,7 +473,7 @@ export default function App() {
                 <YAxis
                   tick={{ fill: "#94a3b8", fontSize: 12 }}
                   tickFormatter={(v) => `$${v}M`}
-                  domain={[0, 45]}
+                  domain={maBarDomain}
                 />
                 <Tooltip content={<CustomTooltip />} />
                 <Legend wrapperStyle={{ fontSize: 12, color: "#94a3b8" }} />
@@ -492,7 +500,7 @@ export default function App() {
                 <YAxis
                   tick={{ fill: "#94a3b8", fontSize: 12 }}
                   tickFormatter={(v) => `$${v}M`}
-                  domain={[20, 40]}
+                  domain={maLineDomain}
                 />
                 <Tooltip
                   formatter={(v) => fmt(v)}
