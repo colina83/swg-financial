@@ -141,10 +141,12 @@ export default function App() {
     const totalExclMC = (rd.total - rd.mc) * 1e6;
     return {
       q: d.q,
-      "Vessels / Total Fleet Day": Math.round(vesselDepnUSD / totalFleetDays),
-      "Vessels / Active Vessel Day": Math.round(vesselDepnUSD / activeFleetDays),
-      "Equip. / Total Fleet Day": Math.round(equipDepn / totalFleetDays),
-      "Total (excl. MC) / Total Fleet Day": Math.round(totalExclMC / totalFleetDays),
+      "Vessel / Total Fleet": Math.round(vesselDepnUSD / totalFleetDays),
+      "Equip. / Total Fleet": Math.round(equipDepn / totalFleetDays),
+      "Total / Total Fleet": Math.round(totalExclMC / totalFleetDays),
+      "Vessel / Active": Math.round(vesselDepnUSD / activeFleetDays),
+      "Equip. / Active": Math.round(equipDepn / activeFleetDays),
+      "Total / Active": Math.round(totalExclMC / activeFleetDays),
       _active: d.activeVessels,
       _total: d.totalVessels,
       _vesselDepn: d.vesselDepn,
@@ -486,61 +488,60 @@ export default function App() {
         {view === "vessel" && (
           <>
             <p style={{ fontSize: 13, color: "#94a3b8", marginBottom: 12 }}>
-              Daily depreciation rates normalised per total fleet vessel-day, split by Vessels,
-              Equipment, and Total (excl. MC)
+              Daily depreciation rates normalised per vessel-day, grouped by Total Fleet (all
+              owned vessels incl. stacked) and Active Fleet (deployed vessels only). All figures
+              exclude MC library amortisation.
             </p>
 
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fit,minmax(180px,1fr))",
-                gap: 10,
-                marginBottom: 18,
-              }}
-            >
-              {[
-                {
-                  color: "#0ea5e9",
-                  label: "Vessels / Total Fleet Day",
-                  desc: "Vessel D&A ÷ (total owned vessels × days). Full fleet burden incl. stacked vessels.",
-                },
-                {
-                  color: "#818cf8",
-                  label: "Vessels / Active Vessel Day",
-                  desc: "Vessel D&A ÷ (active vessels × days). Cost burden on deployed fleet only.",
-                },
-                {
-                  color: "#f59e0b",
-                  label: "Equip. / Total Fleet Day",
-                  desc: "Seismic eq. + Other + Mfg. + ROU D&A ÷ total fleet vessel-days.",
-                },
-                {
-                  color: "#10b981",
-                  label: "Total (excl. MC) / Total Fleet Day",
-                  desc: "All hardware D&A (no MC) ÷ total fleet vessel-days.",
-                },
-              ].map((c) => (
-                <div
-                  key={c.label}
-                  style={{
-                    background: "#1e293b",
-                    borderRadius: 8,
-                    padding: "10px 12px",
-                    borderLeft: `3px solid ${c.color}`,
-                  }}
-                >
-                  <p style={{ fontSize: 11, color: c.color, fontWeight: 700, margin: "0 0 4px" }}>
-                    {c.label}
-                  </p>
-                  <p style={{ fontSize: 11, color: "#64748b", margin: 0, lineHeight: 1.5 }}>
-                    {c.desc}
-                  </p>
+            {/* ── Metric legend cards ── */}
+            {[
+              {
+                group: "Total Fleet (all owned vessels × days)",
+                items: [
+                  { color: "#0ea5e9", label: "Vessel / Total Fleet", desc: "Vessel D&A ÷ total fleet vessel-days." },
+                  { color: "#f59e0b", label: "Equip. / Total Fleet", desc: "Equipment D&A (Seismic + Other + Mfg. + ROU) ÷ total fleet vessel-days." },
+                  { color: "#10b981", label: "Total / Total Fleet", desc: "Vessel + Equipment D&A ÷ total fleet vessel-days." },
+                ],
+              },
+              {
+                group: "Active Fleet (deployed vessels × days)",
+                items: [
+                  { color: "#818cf8", label: "Vessel / Active", desc: "Vessel D&A ÷ active vessel-days." },
+                  { color: "#c084fc", label: "Equip. / Active", desc: "Equipment D&A ÷ active vessel-days." },
+                  { color: "#34d399", label: "Total / Active", desc: "Vessel + Equipment D&A ÷ active vessel-days." },
+                ],
+              },
+            ].map((g) => (
+              <div key={g.group} style={{ marginBottom: 14 }}>
+                <p style={{ fontSize: 11, color: "#64748b", fontWeight: 700, margin: "0 0 6px", textTransform: "uppercase", letterSpacing: 0.5 }}>
+                  {g.group}
+                </p>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 10 }}>
+                  {g.items.map((c) => (
+                    <div
+                      key={c.label}
+                      style={{
+                        background: "#1e293b",
+                        borderRadius: 8,
+                        padding: "10px 12px",
+                        borderLeft: `3px solid ${c.color}`,
+                      }}
+                    >
+                      <p style={{ fontSize: 11, color: c.color, fontWeight: 700, margin: "0 0 4px" }}>
+                        {c.label}
+                      </p>
+                      <p style={{ fontSize: 11, color: "#64748b", margin: 0, lineHeight: 1.5 }}>
+                        {c.desc}
+                      </p>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
 
-            <ResponsiveContainer width="100%" height={320}>
-              <BarChart data={perDayData} barGap={3} barSize={18}>
+            {/* ── Bar chart ── */}
+            <ResponsiveContainer width="100%" height={340}>
+              <BarChart data={perDayData} barGap={2} barSize={14}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
                 <XAxis dataKey="q" tick={{ fill: "#94a3b8", fontSize: 12 }} />
                 <YAxis
@@ -558,47 +559,115 @@ export default function App() {
                   }}
                 />
                 <Legend wrapperStyle={{ fontSize: 11, color: "#94a3b8" }} />
-                <Bar dataKey="Vessels / Total Fleet Day" fill="#0ea5e9" radius={[3, 3, 0, 0]} />
-                <Bar dataKey="Vessels / Active Vessel Day" fill="#818cf8" radius={[3, 3, 0, 0]} />
-                <Bar dataKey="Equip. / Total Fleet Day" fill="#f59e0b" radius={[3, 3, 0, 0]} />
-                <Bar
-                  dataKey="Total (excl. MC) / Total Fleet Day"
-                  fill="#10b981"
-                  radius={[3, 3, 0, 0]}
-                />
+                <Bar dataKey="Vessel / Total Fleet" fill="#0ea5e9" radius={[3, 3, 0, 0]} />
+                <Bar dataKey="Equip. / Total Fleet" fill="#f59e0b" radius={[3, 3, 0, 0]} />
+                <Bar dataKey="Total / Total Fleet" fill="#10b981" radius={[3, 3, 0, 0]} />
+                <Bar dataKey="Vessel / Active" fill="#818cf8" radius={[3, 3, 0, 0]} />
+                <Bar dataKey="Equip. / Active" fill="#c084fc" radius={[3, 3, 0, 0]} />
+                <Bar dataKey="Total / Active" fill="#34d399" radius={[3, 3, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
 
+            {/* ── Detailed table ── */}
             <div style={{ marginTop: 20, overflowX: "auto" }}>
               <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11 }}>
                 <thead>
+                  {/* Group header row */}
+                  <tr style={{ background: "#1e293b" }}>
+                    <th colSpan={4} aria-label="Fleet info" style={{ padding: "6px 8px", textAlign: "center", color: "#64748b", fontWeight: 700, borderBottom: "1px solid #334155", fontSize: 10, letterSpacing: 0.5 }}></th>
+                    <th colSpan={3} style={{ padding: "6px 8px", textAlign: "center", color: "#94a3b8", fontWeight: 700, borderBottom: "1px solid #334155", borderLeft: "2px solid #334155", fontSize: 10, letterSpacing: 0.5 }}>
+                      D&amp;A (USD M)
+                    </th>
+                    <th colSpan={3} style={{ padding: "6px 8px", textAlign: "center", color: "#0ea5e9", fontWeight: 700, borderBottom: "1px solid #334155", borderLeft: "2px solid #334155", fontSize: 10, letterSpacing: 0.5 }}>
+                      $/Day — Total Fleet
+                    </th>
+                    <th colSpan={3} style={{ padding: "6px 8px", textAlign: "center", color: "#818cf8", fontWeight: 700, borderBottom: "1px solid #334155", borderLeft: "2px solid #334155", fontSize: 10, letterSpacing: 0.5 }}>
+                      $/Day — Active Fleet
+                    </th>
+                  </tr>
+                  {/* Sub-header row */}
                   <tr style={{ background: "#1e293b" }}>
                     {[
-                      "Quarter",
-                      "Days",
-                      "Total Fleet",
-                      "Active (avg)",
-                      "Vessel D&A",
-                      "Equip. D&A",
-                      "Total excl.MC",
-                      "$/Vessel/TotFleet",
-                      "$/Vessel/Active",
-                      "$/Equip/TotFleet",
-                      "$/Total/TotFleet",
-                      "Stacked",
+                      { label: "Quarter", align: "left" },
+                      { label: "Days", align: "right" },
+                      { label: "Total Fleet", align: "right" },
+                      { label: "Active (avg)", align: "right" },
                     ].map((h) => (
                       <th
-                        key={h}
+                        key={h.label}
                         style={{
                           padding: "8px 8px",
-                          textAlign: h === "Quarter" ? "left" : "right",
+                          textAlign: h.align,
                           color: "#94a3b8",
                           fontWeight: 600,
                           whiteSpace: "nowrap",
-                          borderBottom: "1px solid #334155",
+                          borderBottom: "2px solid #334155",
                         }}
                       >
-                        {h}
+                        {h.label}
+                      </th>
+                    ))}
+                    {/* D&A columns */}
+                    {[
+                      { label: "Vessel", color: "#0ea5e9" },
+                      { label: "Equip.", color: "#f59e0b" },
+                      { label: "Total", color: "#10b981" },
+                    ].map((h, idx) => (
+                      <th
+                        key={`da-${h.label}`}
+                        style={{
+                          padding: "8px 8px",
+                          textAlign: "right",
+                          color: h.color,
+                          fontWeight: 600,
+                          whiteSpace: "nowrap",
+                          borderBottom: "2px solid #334155",
+                          borderLeft: idx === 0 ? "2px solid #334155" : "none",
+                        }}
+                      >
+                        {h.label}
+                      </th>
+                    ))}
+                    {/* Total Fleet $/day columns */}
+                    {[
+                      { label: "Vessel", color: "#0ea5e9" },
+                      { label: "Equip.", color: "#f59e0b" },
+                      { label: "Total", color: "#10b981" },
+                    ].map((h, idx) => (
+                      <th
+                        key={`tf-${h.label}`}
+                        style={{
+                          padding: "8px 8px",
+                          textAlign: "right",
+                          color: h.color,
+                          fontWeight: 600,
+                          whiteSpace: "nowrap",
+                          borderBottom: "2px solid #334155",
+                          borderLeft: idx === 0 ? "2px solid #334155" : "none",
+                        }}
+                      >
+                        {h.label}
+                      </th>
+                    ))}
+                    {/* Active Fleet $/day columns */}
+                    {[
+                      { label: "Vessel", color: "#818cf8" },
+                      { label: "Equip.", color: "#c084fc" },
+                      { label: "Total", color: "#34d399" },
+                    ].map((h, idx) => (
+                      <th
+                        key={`af-${h.label}`}
+                        style={{
+                          padding: "8px 8px",
+                          textAlign: "right",
+                          color: h.color,
+                          fontWeight: 600,
+                          whiteSpace: "nowrap",
+                          borderBottom: "2px solid #334155",
+                          borderLeft: idx === 0 ? "2px solid #334155" : "none",
+                        }}
+                      >
+                        {h.label}
                       </th>
                     ))}
                   </tr>
@@ -609,9 +678,10 @@ export default function App() {
                     const totalFleetDays = d.totalVessels * d.days;
                     const activeFleetDays = d.activeVessels * d.days;
                     const vesselDepnUSD = d.vesselDepn * 1e6;
-                    const equipDepn = (rd.seismic + rd.other + rd.mfg + rd.rou) * 1e6;
-                    const totalExclMC = (rd.total - rd.mc) * 1e6;
-                    const stacked = d.totalVessels - Math.round(d.activeVessels);
+                    const equipVal = rd.seismic + rd.other + rd.mfg + rd.rou;
+                    const equipDepn = equipVal * 1e6;
+                    const totalVal = rd.total - rd.mc;
+                    const totalExclMC = totalVal * 1e6;
                     return (
                       <tr
                         key={d.q}
@@ -632,63 +702,35 @@ export default function App() {
                         <td style={{ padding: "7px 8px", textAlign: "right", color: "#94a3b8" }}>
                           {d.activeVessels}
                         </td>
-                        <td style={{ padding: "7px 8px", textAlign: "right", color: "#0ea5e9" }}>
+                        {/* D&A values */}
+                        <td style={{ padding: "7px 8px", textAlign: "right", color: "#0ea5e9", borderLeft: "2px solid #1e293b" }}>
                           ${d.vesselDepn.toFixed(1)}M
                         </td>
                         <td style={{ padding: "7px 8px", textAlign: "right", color: "#f59e0b" }}>
-                          ${(rd.seismic + rd.other + rd.mfg + rd.rou).toFixed(1)}M
+                          ${equipVal.toFixed(1)}M
                         </td>
-                        <td style={{ padding: "7px 8px", textAlign: "right", color: "#10b981" }}>
-                          ${(rd.total - rd.mc).toFixed(1)}M
+                        <td style={{ padding: "7px 8px", textAlign: "right", color: "#10b981", fontWeight: 600 }}>
+                          ${totalVal.toFixed(1)}M
                         </td>
-                        <td
-                          style={{
-                            padding: "7px 8px",
-                            textAlign: "right",
-                            color: "#0ea5e9",
-                            fontWeight: 600,
-                          }}
-                        >
+                        {/* $/day — Total Fleet */}
+                        <td style={{ padding: "7px 8px", textAlign: "right", color: "#0ea5e9", fontWeight: 600, borderLeft: "2px solid #1e293b" }}>
                           {fmtUSD(Math.round(vesselDepnUSD / totalFleetDays))}
                         </td>
-                        <td
-                          style={{
-                            padding: "7px 8px",
-                            textAlign: "right",
-                            color: "#818cf8",
-                            fontWeight: 600,
-                          }}
-                        >
-                          {fmtUSD(Math.round(vesselDepnUSD / activeFleetDays))}
-                        </td>
-                        <td
-                          style={{
-                            padding: "7px 8px",
-                            textAlign: "right",
-                            color: "#f59e0b",
-                            fontWeight: 600,
-                          }}
-                        >
+                        <td style={{ padding: "7px 8px", textAlign: "right", color: "#f59e0b", fontWeight: 600 }}>
                           {fmtUSD(Math.round(equipDepn / totalFleetDays))}
                         </td>
-                        <td
-                          style={{
-                            padding: "7px 8px",
-                            textAlign: "right",
-                            color: "#10b981",
-                            fontWeight: 600,
-                          }}
-                        >
+                        <td style={{ padding: "7px 8px", textAlign: "right", color: "#10b981", fontWeight: 600 }}>
                           {fmtUSD(Math.round(totalExclMC / totalFleetDays))}
                         </td>
-                        <td
-                          style={{
-                            padding: "7px 8px",
-                            textAlign: "right",
-                            color: stacked > 3 ? "#e11d48" : "#64748b",
-                          }}
-                        >
-                          {stacked}v
+                        {/* $/day — Active Fleet */}
+                        <td style={{ padding: "7px 8px", textAlign: "right", color: "#818cf8", fontWeight: 600, borderLeft: "2px solid #1e293b" }}>
+                          {fmtUSD(Math.round(vesselDepnUSD / activeFleetDays))}
+                        </td>
+                        <td style={{ padding: "7px 8px", textAlign: "right", color: "#c084fc", fontWeight: 600 }}>
+                          {fmtUSD(Math.round(equipDepn / activeFleetDays))}
+                        </td>
+                        <td style={{ padding: "7px 8px", textAlign: "right", color: "#34d399", fontWeight: 600 }}>
+                          {fmtUSD(Math.round(totalExclMC / activeFleetDays))}
                         </td>
                       </tr>
                     );
@@ -707,12 +749,14 @@ export default function App() {
               }}
             >
               <p style={{ fontSize: 11, color: "#94a3b8", lineHeight: 1.7, margin: 0 }}>
-                <b style={{ color: "#6366f1" }}>Key insight:</b> Equipment D&amp;A (amber) is a
-                meaningful secondary cost — running ~$5–6k/vessel/day in 2024, declining to
-                ~$3–4k in 2025 as older seismic equipment reaches full depreciation. The green
-                Total (excl. MC) bar gives the full hardware depreciation burden per fleet
-                vessel-day. <b>Note:</b> Shearwater does not disclose per-vessel book values; all
-                figures represent fleet-average daily rates.
+                <b style={{ color: "#6366f1" }}>How to read this table:</b> The <b>D&amp;A</b> columns
+                show quarterly Vessel and Equipment depreciation in USD millions, with a <b>Total</b> (Vessel + Equipment,
+                excl. MC). The <b>$/Day — Total Fleet</b> group divides each D&amp;A figure by total
+                fleet vessel-days (all owned vessels × calendar days), reflecting the full fleet
+                burden including stacked vessels. The <b>$/Day — Active Fleet</b> group divides by
+                active vessel-days only (deployed vessels × days), showing the cost on working fleet.
+                <b> Note:</b> Shearwater does not disclose per-vessel book values; all figures
+                represent fleet-average daily rates.
               </p>
             </div>
           </>
