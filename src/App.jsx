@@ -56,6 +56,7 @@ const COLORS = {
   rou:     "#10b981",
   mfg:     "#f97316",
   mc:      "#e11d48",
+  overhead: "#a78bfa",
 };
 
 const fmt = (v) => `$${v.toFixed(1)}M`;
@@ -160,6 +161,24 @@ export default function App() {
     };
   });
 
+  /* ── Marine Acquisition overhead ── */
+  const maOverheadData = rawData.map((d) => {
+    const overhead = d.vessels + d.seismic + d.other + d.rou;
+    return {
+      q: d.q,
+      "Seismic Vessels": d.vessels,
+      "Seismic Equipment": d.seismic,
+      "Other Equip.": d.other,
+      "Right of Use": d.rou,
+      _overhead: overhead,
+    };
+  });
+
+  const maOverheadLine = rawData.map((d) => ({
+    q: d.q,
+    "MA Overhead": d.vessels + d.seismic + d.other + d.rou,
+  }));
+
   const fmtUSD = (v) => v.toLocaleString();
 
   const tabs = [
@@ -167,6 +186,7 @@ export default function App() {
     { id: "total",   label: "Total D&A Trend" },
     { id: "bs",      label: "Balance Sheet Values" },
     { id: "vessel",  label: "Depr. per Vessel/Day" },
+    { id: "overhead", label: "Marine Acquisition Overhead" },
     { id: "table",   label: "Data Table" },
   ];
 
@@ -371,6 +391,277 @@ export default function App() {
                   <p style={{ fontSize: 11, color: "#475569", margin: 0 }}>{c.s}</p>
                 </div>
               ))}
+            </div>
+          </>
+        )}
+
+        {view === "overhead" && (
+          <>
+            <p style={{ fontSize: 13, color: "#94a3b8", marginBottom: 12 }}>
+              Marine Acquisition segment overhead — Vessel D&amp;A, Seismic Equipment, Other Equipment
+              and Right-of-Use costs. Excludes Multi-Client library amortisation and Manufacturing Equipment.
+            </p>
+
+            {/* ── Summary cards ── */}
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(3, 1fr)",
+                gap: 12,
+                marginBottom: 20,
+              }}
+            >
+              {[
+                {
+                  label: "Latest Quarter (Q1 2026)",
+                  value: fmt(maOverheadData[maOverheadData.length - 1]._overhead),
+                  sub: `Vessels ${fmt(rawData[rawData.length - 1].vessels)} · Equip. ${fmt(
+                    rawData[rawData.length - 1].seismic +
+                      rawData[rawData.length - 1].other +
+                      rawData[rawData.length - 1].rou
+                  )}`,
+                  color: "#a78bfa",
+                },
+                {
+                  label: "2025 Annual Total",
+                  value: fmt(rawData.slice(4, 8).reduce((s, d) => s + d.vessels + d.seismic + d.other + d.rou, 0)),
+                  sub: `Avg ${fmt(
+                    rawData.slice(4, 8).reduce((s, d) => s + d.vessels + d.seismic + d.other + d.rou, 0) / 4
+                  )}/quarter`,
+                  color: "#0ea5e9",
+                },
+                {
+                  label: "2024 Annual Total",
+                  value: fmt(rawData.slice(0, 4).reduce((s, d) => s + d.vessels + d.seismic + d.other + d.rou, 0)),
+                  sub: `Avg ${fmt(
+                    rawData.slice(0, 4).reduce((s, d) => s + d.vessels + d.seismic + d.other + d.rou, 0) / 4
+                  )}/quarter`,
+                  color: "#10b981",
+                },
+              ].map((c) => (
+                <div
+                  key={c.label}
+                  style={{
+                    background: "#1e293b",
+                    borderRadius: 8,
+                    padding: "14px 16px",
+                    borderLeft: `3px solid ${c.color}`,
+                  }}
+                >
+                  <p style={{ fontSize: 11, color: "#64748b", margin: "0 0 6px" }}>{c.label}</p>
+                  <p style={{ fontSize: 22, fontWeight: 700, color: c.color, margin: "0 0 4px" }}>
+                    {c.value}
+                  </p>
+                  <p style={{ fontSize: 11, color: "#475569", margin: 0 }}>{c.sub}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* ── Stacked bar chart ── */}
+            <ResponsiveContainer width="100%" height={340}>
+              <BarChart data={maOverheadData} barSize={36}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                <XAxis dataKey="q" tick={{ fill: "#94a3b8", fontSize: 12 }} />
+                <YAxis
+                  tick={{ fill: "#94a3b8", fontSize: 12 }}
+                  tickFormatter={(v) => `$${v}M`}
+                  domain={[0, 45]}
+                />
+                <Tooltip content={<CustomTooltip />} />
+                <Legend wrapperStyle={{ fontSize: 12, color: "#94a3b8" }} />
+                <Bar dataKey="Seismic Vessels" stackId="a" fill={COLORS.vessels} />
+                <Bar dataKey="Seismic Equipment" stackId="a" fill={COLORS.seismic} />
+                <Bar dataKey="Right of Use" stackId="a" fill={COLORS.rou} />
+                <Bar
+                  dataKey="Other Equip."
+                  stackId="a"
+                  fill={COLORS.other}
+                  radius={[4, 4, 0, 0]}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+
+            {/* ── Trend line ── */}
+            <p style={{ fontSize: 12, color: "#94a3b8", marginTop: 20, marginBottom: 8, fontWeight: 600 }}>
+              Quarterly Marine Acquisition Overhead Trend
+            </p>
+            <ResponsiveContainer width="100%" height={220}>
+              <LineChart data={maOverheadLine}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                <XAxis dataKey="q" tick={{ fill: "#94a3b8", fontSize: 12 }} />
+                <YAxis
+                  tick={{ fill: "#94a3b8", fontSize: 12 }}
+                  tickFormatter={(v) => `$${v}M`}
+                  domain={[20, 40]}
+                />
+                <Tooltip
+                  formatter={(v) => fmt(v)}
+                  labelStyle={{ color: "#38bdf8" }}
+                  contentStyle={{ background: "#1e293b", border: "1px solid #334155" }}
+                />
+                <Line
+                  dataKey="MA Overhead"
+                  stroke="#a78bfa"
+                  strokeWidth={2.5}
+                  dot={{ r: 5, fill: "#a78bfa" }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+
+            {/* ── Detailed table ── */}
+            <div style={{ marginTop: 20, overflowX: "auto" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+                <thead>
+                  <tr style={{ background: "#1e293b" }}>
+                    {[
+                      "Quarter",
+                      "Vessels",
+                      "Seismic Eq.",
+                      "Other Eq.",
+                      "ROU",
+                      "MA Overhead",
+                      "% of Total D&A",
+                    ].map((h) => (
+                      <th
+                        key={h}
+                        style={{
+                          padding: "9px 10px",
+                          textAlign: h === "Quarter" ? "left" : "right",
+                          color: "#94a3b8",
+                          fontWeight: 600,
+                          whiteSpace: "nowrap",
+                          borderBottom: "1px solid #334155",
+                        }}
+                      >
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {rawData.map((d, i) => {
+                    const overhead = d.vessels + d.seismic + d.other + d.rou;
+                    const pct = ((overhead / d.total) * 100).toFixed(1);
+                    return (
+                      <tr
+                        key={d.q}
+                        style={{
+                          background: i % 2 === 0 ? "#0f172a" : "#111827",
+                          borderBottom: "1px solid #1e293b",
+                        }}
+                      >
+                        <td style={{ padding: "8px 10px", fontWeight: 600, color: "#38bdf8" }}>
+                          {d.q}
+                        </td>
+                        {[d.vessels, d.seismic, d.other, d.rou].map((v, j) => (
+                          <td
+                            key={j}
+                            style={{
+                              padding: "8px 10px",
+                              textAlign: "right",
+                              color: "#cbd5e1",
+                            }}
+                          >
+                            {fmt(v)}
+                          </td>
+                        ))}
+                        <td
+                          style={{
+                            padding: "8px 10px",
+                            textAlign: "right",
+                            fontWeight: 700,
+                            color: "#a78bfa",
+                          }}
+                        >
+                          {fmt(overhead)}
+                        </td>
+                        <td
+                          style={{
+                            padding: "8px 10px",
+                            textAlign: "right",
+                            color: "#94a3b8",
+                          }}
+                        >
+                          {pct}%
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+                <tfoot>
+                  {[
+                    ["2024 Total", rawData.slice(0, 4)],
+                    ["2025 Total", rawData.slice(4, 8)],
+                    ["2026 Total", rawData.slice(8)],
+                  ].map(([label, rows]) => {
+                    const overhead = rows.reduce(
+                      (s, d) => s + d.vessels + d.seismic + d.other + d.rou,
+                      0
+                    );
+                    const total = rows.reduce((s, d) => s + d.total, 0);
+                    const pct = ((overhead / total) * 100).toFixed(1);
+                    return (
+                      <tr key={label} style={{ background: "#1e293b", fontWeight: 700 }}>
+                        <td style={{ padding: "9px 10px", color: "#f1f5f9" }}>{label}</td>
+                        {[
+                          rows.reduce((s, d) => s + d.vessels, 0),
+                          rows.reduce((s, d) => s + d.seismic, 0),
+                          rows.reduce((s, d) => s + d.other, 0),
+                          rows.reduce((s, d) => s + d.rou, 0),
+                        ].map((v, j) => (
+                          <td
+                            key={j}
+                            style={{
+                              padding: "9px 10px",
+                              textAlign: "right",
+                              color: "#fbbf24",
+                            }}
+                          >
+                            {fmt(v)}
+                          </td>
+                        ))}
+                        <td
+                          style={{
+                            padding: "9px 10px",
+                            textAlign: "right",
+                            color: "#fbbf24",
+                            fontWeight: 700,
+                          }}
+                        >
+                          {fmt(overhead)}
+                        </td>
+                        <td
+                          style={{
+                            padding: "9px 10px",
+                            textAlign: "right",
+                            color: "#fbbf24",
+                          }}
+                        >
+                          {pct}%
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tfoot>
+              </table>
+            </div>
+
+            <div
+              style={{
+                marginTop: 14,
+                background: "#1e293b",
+                borderRadius: 8,
+                padding: "12px 16px",
+                borderLeft: "3px solid #a78bfa",
+              }}
+            >
+              <p style={{ fontSize: 11, color: "#94a3b8", lineHeight: 1.7, margin: 0 }}>
+                <b style={{ color: "#a78bfa" }}>Marine Acquisition Overhead</b> includes only the
+                depreciation and amortisation costs directly attributable to the Marine Acquisition
+                segment: Seismic Vessels, Seismic Equipment, Other Equipment, and Right-of-Use
+                assets. Multi-Client library amortisation and Manufacturing Equipment are excluded
+                as they belong to separate operating segments.
+              </p>
             </div>
           </>
         )}
