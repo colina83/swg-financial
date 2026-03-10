@@ -1,6 +1,6 @@
 # SWG Financial — Shearwater GeoServices D&A Dashboard
 
-Interactive quarterly Depreciation & Amortisation dashboard for Shearwater GeoServices (2024–2025), built with React + Vite and deployed on Vercel.
+Interactive quarterly Depreciation & Amortisation dashboard for Shearwater GeoServices (2024–2026), built with React + Vite and deployed on Vercel.
 
 ## Features
 
