@@ -22,6 +22,7 @@ const quarters = [
   "Q2 2025",
   "Q3 2025",
   "Q4 2025",
+  "Q1 2026",
 ];
 
 const rawData = [
@@ -33,6 +34,7 @@ const rawData = [
   { q: "Q2 2025", total: 31.0, vessels: 16.5, seismic: 8.7,  other: 0.3, rou: 0.7, mfg: 0.1, mc: 1.3,  writedown: 0   },
   { q: "Q3 2025", total: 31.2, vessels: 16.8, seismic: 8.5,  other: 0.3, rou: 0.7, mfg: 0.1, mc: 1.7,  writedown: 0   },
   { q: "Q4 2025", total: 49.3, vessels: 20.5, seismic: 6.1,  other: 0.2, rou: 0.5, mfg: 0.0, mc: 20.3, writedown: 0   },
+  { q: "Q1 2026", total: 27.0, vessels: 16.0, seismic: 5.5,  other: 0.2, rou: 0.5, mfg: 0.0, mc: 1.2,  writedown: 0   },
 ];
 
 const bsData = [
@@ -44,6 +46,7 @@ const bsData = [
   { q: "Q2 2025", total: 914.2 },
   { q: "Q3 2025", total: 887.0 },
   { q: "Q4 2025", total: 863.9 },
+  { q: "Q1 2026", total: 840.0 },
 ];
 
 const COLORS = {
@@ -95,7 +98,7 @@ const CustomTooltip = ({ active, payload, label }) => {
 };
 
 const NOTE =
-  "Note: Vessel D&A includes straight-line depreciation + periodic maintenance component capitalised to balance sheet. MC = Multi-Client library amortisation (incl. accelerated). Q1 2025 includes $3.6M write-down on seismic equipment. Q4 2025 MC includes $20.3M (straight-line + accelerated). Asset-level quarterly splits are estimated proportionally from annual Note 4 disclosures and reported totals.";
+  "Note: Vessel D&A includes straight-line depreciation + periodic maintenance component capitalised to balance sheet. MC = Multi-Client library amortisation (incl. accelerated). Q1 2025 includes $3.6M write-down on seismic equipment. Q4 2025 MC includes $20.3M (straight-line + accelerated). Asset-level quarterly splits are estimated proportionally from annual Note 4 disclosures and reported totals. Q1 2026 data from latest interim report.";
 
 const fleetData = [
   { q: "Q1 2024", days: 91, totalVessels: 23, activeVessels: 8.3,  vesselDepn: 18.8 },
@@ -106,6 +109,7 @@ const fleetData = [
   { q: "Q2 2025", days: 91, totalVessels: 21, activeVessels: 8.1,  vesselDepn: 16.5 },
   { q: "Q3 2025", days: 92, totalVessels: 21, activeVessels: 7.8,  vesselDepn: 16.8 },
   { q: "Q4 2025", days: 92, totalVessels: 21, activeVessels: 8.8,  vesselDepn: 20.5 },
+  { q: "Q1 2026", days: 90, totalVessels: 21, activeVessels: 8.0,  vesselDepn: 16.0 },
 ];
 
 export default function App() {
@@ -181,7 +185,7 @@ export default function App() {
           Shearwater GeoServices — Quarterly Depreciation &amp; Amortisation
         </h1>
         <p style={{ color: "#94a3b8", fontSize: 13, marginBottom: 20 }}>
-          Source: Quarterly IFRS reports, 2024–2025 · All figures in USD millions
+          Source: Quarterly IFRS reports, 2024–2026 · All figures in USD millions
         </p>
 
         <div style={{ display: "flex", gap: 8, marginBottom: 24, flexWrap: "wrap" }}>
@@ -264,7 +268,7 @@ export default function App() {
                 <YAxis
                   tick={{ fill: "#94a3b8", fontSize: 12 }}
                   tickFormatter={(v) => `$${v}M`}
-                  domain={[25, 55]}
+                  domain={[20, 55]}
                 />
                 <Tooltip
                   formatter={(v) => fmt(v)}
@@ -455,7 +459,8 @@ export default function App() {
                 <tfoot>
                   {[
                     ["2024 Total", rawData.slice(0, 4)],
-                    ["2025 Total", rawData.slice(4)],
+                    ["2025 Total", rawData.slice(4, 8)],
+                    ["2026 Total", rawData.slice(8)],
                   ].map(([label, rows]) => (
                     <tr key={label} style={{ background: "#1e293b", fontWeight: 700 }}>
                       <td style={{ padding: "9px 10px", color: "#f1f5f9" }}>{label}</td>
